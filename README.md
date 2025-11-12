@@ -124,3 +124,4 @@
 | **상태 코드**       | 204(NO_CONTENT)                           |
 
 ## 🗂️ ERD
+<img width="192" height="478" alt="Image" src="https://github.com/user-attachments/assets/e74a56fc-a8a8-49dc-93a3-5fc47b55a664" />
