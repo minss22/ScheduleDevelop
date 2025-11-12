@@ -39,10 +39,10 @@ public class ScheduleController {
      * @return 조회된 일정 Response DTO 리스트와 200(OK) 상태 코드
      */
     @GetMapping("/users/{userId}/schedules")
-    public ResponseEntity<List<ScheduleResponse>> getAllSchedule(
+    public ResponseEntity<List<SchedulesResponse>> getAllSchedule(
             @PathVariable Long userId
     ) {
-        List<ScheduleResponse> result = scheduleService.getAll(userId);
+        List<SchedulesResponse> result = scheduleService.getAll(userId);
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 

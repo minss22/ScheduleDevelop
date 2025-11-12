@@ -49,14 +49,14 @@ public class ScheduleService {
      * @return 조회된 일정 Response DTO 리스트
      */
     @Transactional(readOnly = true) // 읽기 전용
-    public List<ScheduleResponse> getAll(Long userId) {
+    public List<SchedulesResponse> getAll(Long userId) {
         User user = userRepository.findById(userId).orElseThrow( // 유저 조회
                 () -> new IllegalStateException("없는 유저입니다.")); // 없으면 예외 처리
 
         // 전체 일정 조회하고, '수정일' 기준 내림차순으로 정렬
         List<Schedule> schedules = scheduleRepository.findByUserOrderByModifiedAtDesc(user);
 
-        return schedules.stream().map(ScheduleResponse::new).toList();
+        return schedules.stream().map(SchedulesResponse::new).toList();
     }
 
     /**
