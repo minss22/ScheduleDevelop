@@ -2,6 +2,8 @@ package project.schedule.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import project.schedule.entity.Schedule;
+import project.user.entity.User;
+
 import java.util.List;
 
 /**
@@ -11,15 +13,9 @@ import java.util.List;
  */
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     /**
-     * 전체 조회, 수정일 기준으로 내림차순
-     * @return 등록된 전체 일정
+     * 유저명을 기준으로 전체 조회 후, 수정일 기준으로 내림차순
+     * @param user 유저명
+     * @return 유저명의 전체 일정
      */
-    List<Schedule> findAllByOrderByModifiedAtDesc();
-    /**
-     * 작성자명을 기준으로 다건 조회, 수정일 기준으로 내림차순
-     * @param name 작성자명
-     * @return 해당 작성자의 전체 일정
-     */
-    List<Schedule> findAllByNameOrderByModifiedAtDesc(String name);
-
+    List<Schedule> findByUserOrderByModifiedAtDesc(User user);
 }

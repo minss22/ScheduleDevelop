@@ -20,58 +20,69 @@ public class ScheduleController {
     private final ScheduleService scheduleService;
 
     /**
-     * 일정 생성
+     * 유저의 일정 생성
+     * @param userId 유저의 고유 ID
      * @param request 일정 생성 Request DTO
      * @return 생성된 일정 Response DTO와 201(CREATED) 상태 코드
      */
-    @PostMapping("/schedules")
-    public ResponseEntity<ScheduleResponse> createSchedule(@RequestBody CreateScheduleRequest request) {
-        ScheduleResponse result = scheduleService.save(request);
+    @PostMapping("/users/{userId}/schedules")
+    public ResponseEntity<ScheduleResponse> createSchedule(
+            @PathVariable Long userId, @RequestBody CreateScheduleRequest request
+    ) {
+        ScheduleResponse result = scheduleService.save(userId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     /**
-     * 전체 일정 조회
-     * @param name 작성자명 (선택)
+     * 유저의 전체 일정 조회
+     * @param userId 유저의 고유 ID
      * @return 조회된 일정 Response DTO 리스트와 200(OK) 상태 코드
      */
-    @GetMapping("/schedules")
-    public ResponseEntity<List<ScheduleResponse>> getAllSchedule(@RequestParam(required = false) String name) {
-        List<ScheduleResponse> result = scheduleService.getAll(name);
+    @GetMapping("/users/{userId}/schedules")
+    public ResponseEntity<List<ScheduleResponse>> getAllSchedule(
+            @PathVariable Long userId
+    ) {
+        List<ScheduleResponse> result = scheduleService.getAll(userId);
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
     /**
-     * 일정 단건 조회
-     * @param userId 일정 고유 ID
-     * @return 조회된 일정 Response DTO 리스트와 200(OK) 상태 코드
+     * 유저의 일정 단건 조회
+     * @param scheduleId 일정 고유 ID
+     * @return 조회된 일정 Response DTO와 200(OK) 상태 코드
      */
-    @GetMapping("/schedules/{userId}")
-    public ResponseEntity<ScheduleResponse> getOneSchedule(@PathVariable Long userId) {
-        ScheduleResponse result = scheduleService.getOne(userId);
+    @GetMapping("/users/{userId}/schedules/{scheduleId}")
+    public ResponseEntity<ScheduleResponse> getOneSchedule(
+            @PathVariable Long scheduleId
+    ) {
+        ScheduleResponse result = scheduleService.getOne(scheduleId);
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
     /**
-     * 일정 수정
-     * @param userId 일정 고유 ID
+     * 유저의 일정 수정
+     * @param scheduleId 일정 고유 ID
      * @param request 일정 수정 Request DTO
-     * @return 수정된 일정 Response DTO 리스트와 200(OK) 상태 코드
+     * @return 수정된 일정 Response DTO와 200(OK) 상태 코드
      */
-    @PutMapping("/schedules/{userId}")
-    public ResponseEntity<ScheduleResponse> updateSchedule(@PathVariable Long userId, @RequestBody UpdateScheduleRequest request) {
-        ScheduleResponse result = scheduleService.update(userId, request);
+    @PutMapping("/users/{userId}/schedules/{scheduleId}")
+    public ResponseEntity<ScheduleResponse> updateSchedule(
+            @PathVariable Long scheduleId, @RequestBody UpdateScheduleRequest request)
+    {
+        ScheduleResponse result = scheduleService.update(scheduleId, request);
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
     /**
-     * 일정 삭제
-     * @param userId 일정 고유 ID
+     * 유저의 일정 삭제
+     * @param scheduleId 일정 고유 ID
      * @return 204(NO_CONTENT) 상태 코드
      */
-    @DeleteMapping("/schedules/{userId}")
-    public ResponseEntity<List<Void>> deleteSchedule(@PathVariable Long userId) {
-        scheduleService.delete(userId);
+    @DeleteMapping("/users/{userId}/schedules/{scheduleId}")
+    public ResponseEntity<List<Void>> deleteSchedule(
+            @PathVariable Long scheduleId
+    ) {
+        scheduleService.delete(scheduleId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

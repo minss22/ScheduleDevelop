@@ -6,6 +6,9 @@ import org.springframework.transaction.annotation.Transactional;
 import project.schedule.dto.*;
 import project.schedule.entity.Schedule;
 import project.schedule.repository.ScheduleRepository;
+import project.user.entity.User;
+import project.user.repository.UserRepository;
+
 import java.util.List;
 
 /**
@@ -18,63 +21,69 @@ import java.util.List;
 public class ScheduleService {
     /** 일정 데이터를 관리하는 JPA Repository */
     private final ScheduleRepository scheduleRepository;
+    private final UserRepository userRepository;
 
     /**
      * Lv 1. 일정 생성
+     * - 유저 조회 후, 유저와 함께 일정 생성
+     * @param userId 유저의 고유 ID
      * @param request 일정 생성 Request DTO
      * @return 생성된 일정 Response DTO
      */
     @Transactional
-    public ScheduleResponse save(CreateScheduleRequest request) {
-        Schedule schedule = new Schedule(request); // DTO → Entity 변환
-        Schedule saved = scheduleRepository.save(schedule); // DB에 일정 저장
+    public ScheduleResponse save(Long userId, CreateScheduleRequest request) {
+        User user = userRepository.findById(userId).orElseThrow( // 유저 조회
+                () -> new IllegalStateException("없는 유저입니다.")); // 없으면 예외 처리
 
-        return new ScheduleResponse(saved); // Entity → DTO 변환 후 반환
+        Schedule schedule = new Schedule(request, user); // Entity에 일정-유저 저장
+        Schedule saved = scheduleRepository.save(schedule); // DB에 일정-유저 저장
+
+        return new ScheduleResponse(saved);
     }
 
     /**
      * Lv 2. 일정 조회
-     * - name 미작성 시 전체 일정 조회
-     * - name 작성 시 name의 전체 일정 조회
+     * - 유저의 전체 일정 조회
      * - 일정 조회 후, 수정일 기준으로 내림차순 정렬
-     * @param name 작성자명 (선택)
+     * @param userId 유저의 고유 ID
      * @return 조회된 일정 Response DTO 리스트
      */
     @Transactional(readOnly = true) // 읽기 전용
-    public List<ScheduleResponse> getAll(String name) {
-        // 전체 일정 조회하고, '수정일' 기준 내림차순으로 정렬
-        List<Schedule> schedules = name==null // name이 null이면 전체 조회, 아니면 '작성자명'을 기준으로 조회
-                ? scheduleRepository.findAllByOrderByModifiedAtDesc()
-                : scheduleRepository.findAllByNameOrderByModifiedAtDesc(name);
+    public List<ScheduleResponse> getAll(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow( // 유저 조회
+                () -> new IllegalStateException("없는 유저입니다.")); // 없으면 예외 처리
 
-        return schedules.stream().map(ScheduleResponse::new).toList(); // Entity 리스트 → DTO 리스트 변환 후 반환
+        // 전체 일정 조회하고, '수정일' 기준 내림차순으로 정렬
+        List<Schedule> schedules = scheduleRepository.findByUserOrderByModifiedAtDesc(user);
+
+        return schedules.stream().map(ScheduleResponse::new).toList();
     }
 
     /**
      * Lv 2. 일정 조회
-     * - id로 단일 일정 조회, null이면 예외 처리
-     * @param id 일정 고유 ID
+     * - scheduleId로 단일 일정 조회, null이면 예외 처리
+     * @param scheduleId 일정 고유 ID
      * @return 조회된 일정 Response DTO
      * @throws IllegalStateException 해당 ID의 일정이 존재하지 않을 경우
      */
     @Transactional(readOnly = true) // 읽기 전용
-    public ScheduleResponse getOne(Long id) {
-        Schedule schedule = findOrThrow(id); // 일정 조회
+    public ScheduleResponse getOne(Long scheduleId) {
+        Schedule schedule = findOrThrow(scheduleId); // 일정 조회
 
         return new ScheduleResponse(schedule);
     }
 
     /**
      * Lv 3. 일정 수정
-     * - id로 선택된 일정 수정
-     * @param id 일정 고유 ID
+     * - scheduleId로 선택된 일정 수정
+     * @param scheduleId 일정 고유 ID
      * @param request 일정 수정 Request DTO
      * @return 수정된 일정 Response DTO
      * @throws IllegalStateException 일정이 존재하지 않거나 비밀번호가 일치하지 않을 경우
      */
     @Transactional
-    public ScheduleResponse update(Long id, UpdateScheduleRequest request) {
-        Schedule schedule = findOrThrow(id); // 일정 조회
+    public ScheduleResponse update(Long scheduleId, UpdateScheduleRequest request) {
+        Schedule schedule = findOrThrow(scheduleId); // 일정 조회
 
         schedule.update(request); // 선택한 일정 수정
         scheduleRepository.flush(); // 변경내용 DB에 동기화해서 수정일 갱신
@@ -84,16 +93,16 @@ public class ScheduleService {
 
     /**
      * Lv 4. 일정 삭제
-     * - id로 선택된 일정 삭제
-     * @param id 일정 고유 ID
+     * - scheduleId로 선택된 일정 삭제
+     * @param scheduleId 일정 고유 ID
      * @throws IllegalStateException 일정이 존재하지 않거나 비밀번호가 일치하지 않을 경우
      */
     @Transactional
-    public void delete(Long id) {
-        boolean exist = scheduleRepository.existsById(id); // 존재 여부
+    public void delete(Long scheduleId) {
+        boolean exist = scheduleRepository.existsById(scheduleId); // 존재 여부
         if (!exist) throw new IllegalStateException("없는 유저입니다."); // 없으면 예외 처리
 
-        scheduleRepository.deleteById(id); // 일정 삭제
+        scheduleRepository.deleteById(scheduleId); // 일정 삭제
     }
 
     /**
