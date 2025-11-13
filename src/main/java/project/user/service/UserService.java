@@ -15,13 +15,28 @@ import java.util.List;
 public class UserService {
     private final UserRepository userRepository;
 
-    // 저장
+    // 회원가입
     @Transactional
     public UserResponse save(CreateUserRequest request) {
         User user = new User(request);
         User saved = userRepository.save(user);
 
         return new UserResponse(saved);
+    }
+
+    // 로그인
+    @Transactional(readOnly = true)
+    public SessionUser login(LoginRequest request) {
+        // 이메일 조회
+        User user = userRepository.findByEmail(request.getEmail()).orElseThrow(
+                () -> new IllegalStateException("없는 유저입니다.")
+        );
+
+        // 비밀번호 일치 여부
+        if (!user.getPassword().equals(request.getPassword()))
+            throw new IllegalStateException("비밀번호가 틀렸습니다."); // 예외 처리
+
+        return new SessionUser(user);
     }
 
     // 단건 조회
