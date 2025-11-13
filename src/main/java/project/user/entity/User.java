@@ -26,6 +26,8 @@ public class User extends UserBaseEntity {
     private String name; // 유저명
     @Column(unique = true, nullable = false)
     private String email; // 이메일
+    @Column(length = 20, nullable = false)
+    private String password; // 비밀번호
 
     /**
      * 유저명, 이메일 저장 (Create)
@@ -34,6 +36,7 @@ public class User extends UserBaseEntity {
     public User(CreateUserRequest request) {
         this.name = request.getName();
         this.email = request.getEmail();
+        this.password = request.getPassword();
     }
 
     /**
