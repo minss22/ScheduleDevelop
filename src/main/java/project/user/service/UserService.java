@@ -1,5 +1,6 @@
 package project.user.service;
 
+import project.config.EmailAlreadyExistsException;
 import project.config.PasswordMismatchException;
 import project.user.dto.*;
 import project.user.entity.User;
@@ -18,6 +19,10 @@ public class UserService {
     // 회원가입
     @Transactional
     public UserResponse save(CreateUserRequest request) {
+        // 이미 이메일이 존재하는 경우 예외 처리
+        if (userRepository.existsByEmail(request.getEmail()))
+            throw new EmailAlreadyExistsException("이미 사용 중인 이메일입니다.");
+
         User user = new User(request);
         User saved = userRepository.save(user);
 
@@ -32,9 +37,9 @@ public class UserService {
                 () -> new IllegalStateException("없는 유저입니다.")
         );
 
-        // 비밀번호 일치 여부
+        // 이메일과 비밀번호가 일치하지 않을 경우 예외 처리
         if (!user.getPassword().equals(request.getPassword()))
-            throw new PasswordMismatchException("비밀번호가 틀렸습니다."); // 예외 처리
+            throw new PasswordMismatchException("비밀번호가 틀렸습니다.");
 
         return new SessionUser(user);
     }
