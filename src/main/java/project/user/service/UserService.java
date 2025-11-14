@@ -1,6 +1,6 @@
 package project.user.service;
 
-import project.schedule.entity.Schedule;
+import project.config.PasswordMismatchException;
 import project.user.dto.*;
 import project.user.entity.User;
 import project.user.repository.UserRepository;
@@ -34,7 +34,7 @@ public class UserService {
 
         // 비밀번호 일치 여부
         if (!user.getPassword().equals(request.getPassword()))
-            throw new IllegalStateException("비밀번호가 틀렸습니다."); // 예외 처리
+            throw new PasswordMismatchException("비밀번호가 틀렸습니다."); // 예외 처리
 
         return new SessionUser(user);
     }
