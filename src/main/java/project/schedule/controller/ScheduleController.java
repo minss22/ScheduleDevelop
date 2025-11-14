@@ -1,5 +1,6 @@
 package project.schedule.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +28,7 @@ public class ScheduleController {
      */
     @PostMapping("/users/{userId}/schedules")
     public ResponseEntity<ScheduleResponse> createSchedule(
-            @PathVariable Long userId, @RequestBody CreateScheduleRequest request
+            @PathVariable Long userId, @Valid @RequestBody CreateScheduleRequest request
     ) {
         ScheduleResponse result = scheduleService.save(userId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
@@ -67,7 +68,7 @@ public class ScheduleController {
      */
     @PutMapping("/users/{userId}/schedules/{scheduleId}")
     public ResponseEntity<ScheduleResponse> updateSchedule(
-            @PathVariable Long scheduleId, @RequestBody UpdateScheduleRequest request)
+            @PathVariable Long scheduleId, @Valid @RequestBody UpdateScheduleRequest request)
     {
         ScheduleResponse result = scheduleService.update(scheduleId, request);
         return ResponseEntity.status(HttpStatus.OK).body(result);

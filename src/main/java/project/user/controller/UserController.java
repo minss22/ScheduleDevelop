@@ -1,6 +1,7 @@
 package project.user.controller;
 
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import project.user.dto.*;
 import project.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,7 @@ public class UserController {
      */
     @PostMapping("/signup")
     public ResponseEntity<UserResponse> signup(
-            @RequestBody CreateUserRequest request
+            @Valid @RequestBody CreateUserRequest request
     ) {
         UserResponse result = userService.save(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
@@ -35,14 +36,14 @@ public class UserController {
      * @return 200(OK) 상태 코드
      */
     @PostMapping("/login")
-    public ResponseEntity<Void> login(
-            @RequestBody LoginRequest request,
+    public ResponseEntity<String> login(
+            @Valid @RequestBody LoginRequest request,
             HttpSession session
     ) {
         SessionUser sessionUser = userService.login(request); // 로그인한 유저 정보를 담는 DTO
         session.setAttribute("loginUser", sessionUser); // key: "loginUser", value: sessionUser
 
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.status(HttpStatus.OK).body("로그인이 완료되었습니다.");
     }
 
     /**
@@ -52,12 +53,12 @@ public class UserController {
      * @return 204(NO_CONTENT) 상태 코드, 로그인 안 했을 경우 400(Bad Request) 상태 코드
      */
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(
+    public ResponseEntity<String> logout(
             @SessionAttribute(name = "loginUser") SessionUser sessionUser,
             HttpSession session
     ) {
         session.invalidate(); // 세션을 무효화
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body("로그아웃이 완료되었습니다.");
     }
 
     /**
@@ -92,7 +93,7 @@ public class UserController {
     @PutMapping("/users")
     public ResponseEntity<UserResponse> updateUser(
             @SessionAttribute(name = "loginUser") SessionUser sessionUser,
-            @RequestBody UpdateUserRequest request
+            @Valid @RequestBody UpdateUserRequest request
     ) {
         UserResponse result = userService.update(sessionUser.getId(), request);
         return ResponseEntity.status(HttpStatus.OK).body(result);
@@ -104,10 +105,10 @@ public class UserController {
      * @return 204(NO_CONTENT) 상태 코드
      */
     @DeleteMapping("/users")
-    public ResponseEntity<Void> deleteUser(
+    public ResponseEntity<String> deleteUser(
             @SessionAttribute(name = "loginUser") SessionUser sessionUser
     ) {
         userService.delete(sessionUser.getId());
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body("삭제가 완료되었습니다.");
     }
 }
