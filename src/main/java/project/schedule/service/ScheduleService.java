@@ -3,6 +3,8 @@ package project.schedule.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import project.config.ScheduleNotFoundException;
+import project.config.UserNotFoundException;
 import project.schedule.dto.*;
 import project.schedule.entity.Schedule;
 import project.schedule.repository.ScheduleRepository;
@@ -32,8 +34,8 @@ public class ScheduleService {
      */
     @Transactional
     public ScheduleResponse save(Long userId, CreateScheduleRequest request) {
-        User user = userRepository.findById(userId).orElseThrow( // 유저 조회
-                () -> new IllegalStateException("없는 유저입니다.")); // 없으면 예외 처리
+        // 유저 조회, 없으면 예외 처리
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
 
         Schedule schedule = new Schedule(request, user); // Entity에 일정-유저 저장
         Schedule saved = scheduleRepository.save(schedule); // DB에 일정-유저 저장
@@ -50,8 +52,7 @@ public class ScheduleService {
      */
     @Transactional(readOnly = true) // 읽기 전용
     public List<SchedulesResponse> getAll(Long userId) {
-        User user = userRepository.findById(userId).orElseThrow( // 유저 조회
-                () -> new IllegalStateException("없는 유저입니다.")); // 없으면 예외 처리
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new); // 없으면 예외 처리
 
         // 전체 일정 조회하고, '수정일' 기준 내림차순으로 정렬
         List<Schedule> schedules = scheduleRepository.findByUserOrderByModifiedAtDesc(user);
@@ -64,11 +65,10 @@ public class ScheduleService {
      * - scheduleId로 단일 일정 조회, null이면 예외 처리
      * @param scheduleId 일정 고유 ID
      * @return 조회된 일정 Response DTO
-     * @throws IllegalStateException 해당 ID의 일정이 존재하지 않을 경우
      */
     @Transactional(readOnly = true) // 읽기 전용
     public ScheduleResponse getOne(Long scheduleId) {
-        Schedule schedule = findOrThrow(scheduleId); // 일정 조회
+        Schedule schedule = scheduleRepository.findById(scheduleId).orElseThrow(ScheduleNotFoundException::new); // 일정 조회
 
         return new ScheduleResponse(schedule);
     }
@@ -79,11 +79,10 @@ public class ScheduleService {
      * @param scheduleId 일정 고유 ID
      * @param request 일정 수정 Request DTO
      * @return 수정된 일정 Response DTO
-     * @throws IllegalStateException 일정이 존재하지 않거나 비밀번호가 일치하지 않을 경우
      */
     @Transactional
     public ScheduleResponse update(Long scheduleId, UpdateScheduleRequest request) {
-        Schedule schedule = findOrThrow(scheduleId); // 일정 조회
+        Schedule schedule = scheduleRepository.findById(scheduleId).orElseThrow(ScheduleNotFoundException::new); // 일정 조회
 
         schedule.update(request); // 선택한 일정 수정
         scheduleRepository.flush(); // 변경내용 DB에 동기화해서 수정일 갱신
@@ -95,25 +94,13 @@ public class ScheduleService {
      * Lv 4. 일정 삭제
      * - scheduleId로 선택된 일정 삭제
      * @param scheduleId 일정 고유 ID
-     * @throws IllegalStateException 일정이 존재하지 않거나 비밀번호가 일치하지 않을 경우
      */
     @Transactional
     public void delete(Long scheduleId) {
         boolean exist = scheduleRepository.existsById(scheduleId); // 존재 여부
-        if (!exist) throw new IllegalStateException("없는 유저입니다."); // 없으면 예외 처리
+        if (!exist) throw new UserNotFoundException(); // 없으면 예외 처리
 
         scheduleRepository.deleteById(scheduleId); // 일정 삭제
-    }
-
-    /**
-     * id를 기준으로 조회, null이면 예외 처리
-     * @param id 일정 고유 ID
-     * @return id를 기준으로 조회된 일정 Entity
-     * @throws IllegalStateException 해당 ID의 일정이 존재하지 않을 경우
-     */
-    private Schedule findOrThrow(Long id) {
-        return scheduleRepository.findById(id)
-                .orElseThrow(() -> new IllegalStateException("존재하지 않는 일정입니다."));
     }
 
 }

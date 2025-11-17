@@ -1,5 +1,6 @@
 package project.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -9,16 +10,24 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 /**
  * 전역 예외 처리
  */
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    /**
+     * 커스텀 예외 처리
+     */
     @ExceptionHandler(ServiceException.class)
-    public ResponseEntity<String> handleServiceException(ServiceException e) {
-        return ResponseEntity.status(e.getStatus()).body(e.getMessage());
+    public ResponseEntity<ErrorResponse> handleServiceException(ServiceException e) {
+        log.error("CustomException 발생 {} : ", e.getMessage());
+        return ResponseEntity.status(e.getErrorMessage().getStatus()).body(new ErrorResponse(e.getErrorMessage()));
     }
 
+    /**
+     * Bean Validation 에러 핸들링
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<String> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
-        String errorMessage = ex.getBindingResult().getFieldErrors().stream()
+    public ResponseEntity<String> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        String errorMessage = e.getBindingResult().getFieldErrors().stream()
                 .findFirst() // 첫 번째 에러를 Optional로 가져옴
                 .map(fieldError -> fieldError.getDefaultMessage()) // 있다면 메시지로 변환
                 .orElse("입력 값이 올바르지 않습니다."); // 없다면 기본 메시지 사용
@@ -26,8 +35,4 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
     }
 
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<String> handleIllegalStateException(IllegalStateException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-    }
 }

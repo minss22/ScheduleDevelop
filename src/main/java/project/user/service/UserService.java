@@ -2,6 +2,8 @@ package project.user.service;
 
 import project.config.EmailAlreadyExistsException;
 import project.config.PasswordMismatchException;
+import project.config.ScheduleNotFoundException;
+import project.config.UserNotFoundException;
 import project.user.dto.*;
 import project.user.entity.User;
 import project.user.repository.UserRepository;
@@ -21,7 +23,7 @@ public class UserService {
     public UserResponse save(CreateUserRequest request) {
         // 이미 이메일이 존재하는 경우 예외 처리
         if (userRepository.existsByEmail(request.getEmail()))
-            throw new EmailAlreadyExistsException("이미 사용 중인 이메일입니다.");
+            throw new EmailAlreadyExistsException();
 
         User user = new User(request);
         User saved = userRepository.save(user);
@@ -33,13 +35,11 @@ public class UserService {
     @Transactional(readOnly = true)
     public SessionUser login(LoginRequest request) {
         // 이메일 조회
-        User user = userRepository.findByEmail(request.getEmail()).orElseThrow(
-                () -> new IllegalStateException("없는 유저입니다.")
-        );
+        User user = userRepository.findByEmail(request.getEmail()).orElseThrow(UserNotFoundException::new);
 
         // 이메일과 비밀번호가 일치하지 않을 경우 예외 처리
         if (!user.getPassword().equals(request.getPassword()))
-            throw new PasswordMismatchException("비밀번호가 틀렸습니다.");
+            throw new PasswordMismatchException();
 
         return new SessionUser(user);
     }
@@ -47,9 +47,8 @@ public class UserService {
     // 단건 조회
     @Transactional(readOnly = true)
     public UserResponse getOne(Long id) {
-        User user = userRepository.findById(id).orElseThrow(
-                () -> new IllegalStateException("없는 유저입니다.")
-        );
+        // 유저 조회, 없으면 예외 처리
+        User user = userRepository.findById(id).orElseThrow(UserNotFoundException::new);
 
         return new UserResponse(user);
     }
@@ -65,7 +64,7 @@ public class UserService {
     // 수정
     @Transactional
     public UserResponse update(Long id, UpdateUserRequest request) {
-        User user = findOrThrow(id);
+        User user = userRepository.findById(id).orElseThrow(ScheduleNotFoundException::new);
 
         user.update(request); // 선택한 유저
         userRepository.flush(); // 변경내용 DB에 동기화해서 수정일 갱신
@@ -77,15 +76,8 @@ public class UserService {
     @Transactional
     public void delete(Long id) {
         boolean exist = userRepository.existsById(id);
-
-        if (!exist) throw new IllegalStateException("없는 유저입니다.");
+        if (!exist) throw new UserNotFoundException();
 
         userRepository.deleteById(id);
-    }
-
-    // id를 기준으로 조회, null이면 예외 처리
-    private User findOrThrow(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new IllegalStateException("존재하지 않는 일정입니다."));
     }
 }
