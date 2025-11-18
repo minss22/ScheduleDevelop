@@ -26,17 +26,17 @@ public class User extends UserBaseEntity {
     private String name; // 유저명
     @Column(unique = true, nullable = false)
     private String email; // 이메일
-    @Column(length = 20, nullable = false)
+    @Column(nullable = false)
     private String password; // 비밀번호
 
     /**
      * 유저명, 이메일 저장 (Create)
      * @param request 유저 생성 Request DTO
      */
-    public User(CreateUserRequest request) {
+    public User(CreateUserRequest request, String encodedPassword) {
         this.name = request.getName();
         this.email = request.getEmail();
-        this.password = request.getPassword();
+        this.password = encodedPassword; // 암호화된 비밀번호
     }
 
     /**

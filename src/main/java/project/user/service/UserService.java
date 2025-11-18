@@ -1,6 +1,7 @@
 package project.user.service;
 
 import project.config.EmailAlreadyExistsException;
+import project.config.PasswordEncoder;
 import project.config.PasswordMismatchException;
 import project.config.UserNotFoundException;
 import project.user.dto.*;
@@ -16,6 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     // 회원가입
     @Transactional
@@ -24,7 +26,9 @@ public class UserService {
         if (userRepository.existsByEmail(request.getEmail()))
             throw new EmailAlreadyExistsException();
 
-        User user = new User(request);
+        // 비밀번호 암호화
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
+        User user = new User(request, encodedPassword);
         User saved = userRepository.save(user);
 
         return new UserResponse(saved);
@@ -36,8 +40,8 @@ public class UserService {
         // 이메일 조회
         User user = userRepository.findByEmail(request.getEmail()).orElseThrow(UserNotFoundException::new);
 
-        // 이메일과 비밀번호가 일치하지 않을 경우 예외 처리
-        if (!user.getPassword().equals(request.getPassword()))
+        // 비밀번호가 일치하지 않을 경우 예외 처리
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword()))
             throw new PasswordMismatchException();
 
         return new SessionUser(user);
