@@ -34,9 +34,8 @@ public class ScheduleService {
      */
     @Transactional
     public ScheduleResponse save(Long userId, CreateScheduleRequest request) {
-        // 유저 조회, 없으면 예외 처리
+        // 유저 조회
         User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
-
         Schedule schedule = new Schedule(request, user); // Entity에 일정-유저 저장
         Schedule saved = scheduleRepository.save(schedule); // DB에 일정-유저 저장
 
@@ -52,8 +51,8 @@ public class ScheduleService {
      */
     @Transactional(readOnly = true) // 읽기 전용
     public List<SchedulesResponse> getAll(Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new); // 없으면 예외 처리
-
+        // 유저 조회
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
         // 전체 일정 조회하고, '수정일' 기준 내림차순으로 정렬
         List<Schedule> schedules = scheduleRepository.findByUserOrderByModifiedAtDesc(user);
 
@@ -67,8 +66,11 @@ public class ScheduleService {
      * @return 조회된 일정 Response DTO
      */
     @Transactional(readOnly = true) // 읽기 전용
-    public ScheduleResponse getOne(Long scheduleId) {
-        Schedule schedule = scheduleRepository.findById(scheduleId).orElseThrow(ScheduleNotFoundException::new); // 일정 조회
+    public ScheduleResponse getOne(Long userId, Long scheduleId) {
+        // 유저 조회
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+        // 일정 ID와 유저가 모두 일치하는 일정 조회!
+        Schedule schedule = scheduleRepository.findByIdAndUser(scheduleId, user).orElseThrow(ScheduleNotFoundException::new);
 
         return new ScheduleResponse(schedule);
     }
@@ -81,8 +83,11 @@ public class ScheduleService {
      * @return 수정된 일정 Response DTO
      */
     @Transactional
-    public ScheduleResponse update(Long scheduleId, UpdateScheduleRequest request) {
-        Schedule schedule = scheduleRepository.findById(scheduleId).orElseThrow(ScheduleNotFoundException::new); // 일정 조회
+    public ScheduleResponse update(Long userId, Long scheduleId, UpdateScheduleRequest request) {
+        // 유저 조회
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+        // 일정 ID와 유저가 모두 일치하는 일정 조회!
+        Schedule schedule = scheduleRepository.findByIdAndUser(scheduleId, user).orElseThrow(ScheduleNotFoundException::new);
 
         schedule.update(request); // 선택한 일정 수정
         scheduleRepository.flush(); // 변경내용 DB에 동기화해서 수정일 갱신
@@ -96,9 +101,12 @@ public class ScheduleService {
      * @param scheduleId 일정 고유 ID
      */
     @Transactional
-    public void delete(Long scheduleId) {
-        boolean exist = scheduleRepository.existsById(scheduleId); // 존재 여부
-        if (!exist) throw new UserNotFoundException(); // 없으면 예외 처리
+    public void delete(Long userId, Long scheduleId) {
+        // 유저 조회
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+        // 일정 ID와 유저가 모두 일치하는 일정 존재 확인!
+        boolean exist = scheduleRepository.existsByIdAndUser(scheduleId, user);
+        if (!exist) throw new ScheduleNotFoundException(); // 없으면 예외 처리
 
         scheduleRepository.deleteById(scheduleId); // 일정 삭제
     }

@@ -2,7 +2,6 @@ package project.user.service;
 
 import project.config.EmailAlreadyExistsException;
 import project.config.PasswordMismatchException;
-import project.config.ScheduleNotFoundException;
 import project.config.UserNotFoundException;
 import project.user.dto.*;
 import project.user.entity.User;
@@ -47,7 +46,7 @@ public class UserService {
     // 단건 조회
     @Transactional(readOnly = true)
     public UserResponse getOne(Long id) {
-        // 유저 조회, 없으면 예외 처리
+        // 유저 조회
         User user = userRepository.findById(id).orElseThrow(UserNotFoundException::new);
 
         return new UserResponse(user);
@@ -64,9 +63,13 @@ public class UserService {
     // 수정
     @Transactional
     public UserResponse update(Long id, UpdateUserRequest request) {
-        User user = userRepository.findById(id).orElseThrow(ScheduleNotFoundException::new);
+        // 이미 이메일이 존재하는 경우 예외 처리
+        if (userRepository.existsByEmail(request.getEmail()))
+            throw new EmailAlreadyExistsException();
 
-        user.update(request); // 선택한 유저
+        // 유저 조회
+        User user = userRepository.findById(id).orElseThrow(UserNotFoundException::new);
+        user.update(request); // 선택한 유저의 정보 업데이트
         userRepository.flush(); // 변경내용 DB에 동기화해서 수정일 갱신
 
         return new UserResponse(user);

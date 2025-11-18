@@ -5,8 +5,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import project.config.UnauthorizedException;
 import project.schedule.dto.*;
 import project.schedule.service.ScheduleService;
+import project.user.dto.SessionUser;
+
 import java.util.List;
 
 /**
@@ -22,28 +25,33 @@ public class ScheduleController {
 
     /**
      * 유저의 일정 생성
-     * @param userId 유저의 고유 ID
+     * @param sessionUser 로그인한 유저 정보를 담은 DTO
      * @param request 일정 생성 Request DTO
      * @return 생성된 일정 Response DTO와 201(CREATED) 상태 코드
      */
-    @PostMapping("/users/{userId}/schedules")
+    @PostMapping("/users/schedules")
     public ResponseEntity<ScheduleResponse> createSchedule(
-            @PathVariable Long userId, @Valid @RequestBody CreateScheduleRequest request
+            @SessionAttribute(name = "loginUser", required = false) SessionUser sessionUser,
+            @Valid @RequestBody CreateScheduleRequest request
     ) {
-        ScheduleResponse result = scheduleService.save(userId, request);
+        if (sessionUser == null) throw new UnauthorizedException();
+
+        ScheduleResponse result = scheduleService.save(sessionUser.getId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     /**
      * 유저의 전체 일정 조회
-     * @param userId 유저의 고유 ID
+     * @param sessionUser 로그인한 유저 정보를 담은 DTO
      * @return 조회된 일정 Response DTO 리스트와 200(OK) 상태 코드
      */
-    @GetMapping("/users/{userId}/schedules")
+    @GetMapping("/users/schedules")
     public ResponseEntity<List<SchedulesResponse>> getAllSchedule(
-            @PathVariable Long userId
+            @SessionAttribute(name = "loginUser", required = false) SessionUser sessionUser
     ) {
-        List<SchedulesResponse> result = scheduleService.getAll(userId);
+        if (sessionUser == null) throw new UnauthorizedException();
+
+        List<SchedulesResponse> result = scheduleService.getAll(sessionUser.getId());
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
@@ -52,11 +60,14 @@ public class ScheduleController {
      * @param scheduleId 일정 고유 ID
      * @return 조회된 일정 Response DTO와 200(OK) 상태 코드
      */
-    @GetMapping("/users/{userId}/schedules/{scheduleId}")
+    @GetMapping("/users/schedules/{scheduleId}")
     public ResponseEntity<ScheduleResponse> getOneSchedule(
+            @SessionAttribute(name = "loginUser", required = false) SessionUser sessionUser,
             @PathVariable Long scheduleId
     ) {
-        ScheduleResponse result = scheduleService.getOne(scheduleId);
+        if (sessionUser == null) throw new UnauthorizedException();
+
+        ScheduleResponse result = scheduleService.getOne(sessionUser.getId(), scheduleId);
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
@@ -66,11 +77,15 @@ public class ScheduleController {
      * @param request 일정 수정 Request DTO
      * @return 수정된 일정 Response DTO와 200(OK) 상태 코드
      */
-    @PutMapping("/users/{userId}/schedules/{scheduleId}")
+    @PutMapping("/users/schedules/{scheduleId}")
     public ResponseEntity<ScheduleResponse> updateSchedule(
-            @PathVariable Long scheduleId, @Valid @RequestBody UpdateScheduleRequest request)
+            @SessionAttribute(name = "loginUser", required = false) SessionUser sessionUser,
+            @PathVariable Long scheduleId,
+            @Valid @RequestBody UpdateScheduleRequest request)
     {
-        ScheduleResponse result = scheduleService.update(scheduleId, request);
+        if (sessionUser == null) throw new UnauthorizedException();
+
+        ScheduleResponse result = scheduleService.update(sessionUser.getId(), scheduleId, request);
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
@@ -79,11 +94,14 @@ public class ScheduleController {
      * @param scheduleId 일정 고유 ID
      * @return 204(NO_CONTENT) 상태 코드
      */
-    @DeleteMapping("/users/{userId}/schedules/{scheduleId}")
+    @DeleteMapping("/users/schedules/{scheduleId}")
     public ResponseEntity<List<Void>> deleteSchedule(
+            @SessionAttribute(name = "loginUser", required = false) SessionUser sessionUser,
             @PathVariable Long scheduleId
     ) {
-        scheduleService.delete(scheduleId);
+        if (sessionUser == null) throw new UnauthorizedException();
+
+        scheduleService.delete(sessionUser.getId(), scheduleId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }
