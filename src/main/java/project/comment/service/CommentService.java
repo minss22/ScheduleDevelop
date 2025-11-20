@@ -2,6 +2,7 @@ package project.comment.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import project.comment.dto.CommentResponse;
 import project.comment.dto.CreateCommentRequest;
 import project.comment.dto.UpdateCommentRequest;
@@ -19,6 +20,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CommentService {
     private final CommentRepository commentRepository;
     private final ScheduleRepository scheduleRepository;
@@ -34,6 +36,7 @@ public class CommentService {
         return new CommentResponse(saved);
     }
 
+    @Transactional(readOnly = true)
     public List<CommentResponse> getAll(Long scheduleId) {
         Schedule schedule = scheduleRepository.findById(scheduleId).orElseThrow(ScheduleNotFoundException::new); // 일정 조회
 
