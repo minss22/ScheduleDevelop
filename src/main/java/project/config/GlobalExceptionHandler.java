@@ -18,7 +18,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(ServiceException.class)
     public ResponseEntity<ErrorResponse> handleServiceException(ServiceException e) {
-        log.error("CustomException 발생 {} : ", e.getMessage());
+        log.error("CustomException 발생 {}", e.getMessage());
         return ResponseEntity.status(e.getErrorMessage().getStatus()).body(new ErrorResponse(e.getErrorMessage()));
     }
 
